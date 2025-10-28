@@ -47,8 +47,8 @@ Route::middleware(['auth'])->group(function () {
     // Маршруты для родителей
     Route::prefix('parent')->middleware(['role:parent'])->group(function () {
         Route::get('/dashboard', [ParentController::class, 'dashboard'])->name('parent.dashboard');
-        Route::get('/child/{childId}/progress', [ParentController::class, 'childProgress'])->name('parent.child-progress');
         Route::post('/add-child', [ParentController::class, 'addChild'])->name('parent.add-child');
+        Route::get('/child/{childId}/progress', [ParentController::class, 'childProgress'])->name('parent.child-progress');
     });
 
     // Админ-маршруты
@@ -56,19 +56,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('admin.dashboard');
         // Управление пользователями
         Route::get('/users', [AdminUserManagementController::class, 'index'])->name('admin.users.index');
-        Route::get('/users/{user}', [AdminUserManagementController::class, 'show'])->name('admin.users.show');
-        Route::get('/users/{user}/edit', [AdminUserManagementController::class, 'edit'])->name('admin.users.edit');
-        Route::put('/users/{user}', [AdminUserManagementController::class, 'update'])->name('admin.users.update');
-        Route::get('/users/create', [AdminUserManagementController::class, 'create'])->name('admin.users.create');
         Route::post('/users', [AdminUserManagementController::class, 'store'])->name('admin.users.store');
+        Route::get('/users/create', [AdminUserManagementController::class, 'create'])->name('admin.users.create');
+        Route::get('/users/search', [AdminUserManagementController::class, 'search'])->name('admin.users.search');
+        Route::get('/users/search-parents', [AdminUserManagementController::class, 'searchParents'])->name('admin.users.search-parents');
+        Route::get('/users/{user}', [AdminUserManagementController::class, 'show'])->name('admin.users.show');
+        Route::put('/users/{user}', [AdminUserManagementController::class, 'update'])->name('admin.users.update');
         Route::delete('/users/{user}', [AdminUserManagementController::class, 'destroy'])->name('admin.users.destroy');
+        Route::get('/users/{user}/edit', [AdminUserManagementController::class, 'edit'])->name('admin.users.edit');
         Route::patch('/users/{user}/activate', [AdminUserManagementController::class, 'activate'])->name('admin.users.activate');
         Route::patch('/users/{user}/deactivate', [AdminUserManagementController::class, 'deactivate'])->name('admin.users.deactivate');
         Route::patch('/users/{user}/toggle-status', [AdminUserManagementController::class, 'toggleStatus'])->name('admin.users.toggle-status');
         Route::put('/users/{user}/roles', [AdminUserManagementController::class, 'updateRoles'])->name('admin.users.update-roles');
         Route::get('/users/{user}/roles/edit', [AdminUserManagementController::class, 'editRoles'])->name('admin.users.edit-roles');
-        Route::get('/users/search', [AdminUserManagementController::class, 'search'])->name('admin.users.search');
-        Route::get('/users/search-parents', [AdminUserManagementController::class, 'searchParents'])->name('admin.users.search-parents');
         Route::get('/parent-relationships', [AdminParentRelationshipController::class, 'index'])->name('admin.parent-relationships.index');
         Route::post('/parent-relationships', [AdminParentRelationshipController::class, 'store'])->name('admin.parent-relationships.store');
         Route::put('/parent-relationships/{relationship}', [AdminParentRelationshipController::class, 'update'])->name('admin.parent-relationships.update');
@@ -87,11 +87,11 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/content/subjects/{subject}/deactivate', [AdminContentManagementController::class, 'deactivateSubject'])->name('admin.content.subjects.deactivate');
         // Управление ролями системы
         Route::get('/roles', [AdminUserManagementController::class, 'rolesIndex'])->name('admin.roles.index');
-        Route::get('/roles/create', [AdminUserManagementController::class, 'rolesCreate'])->name('admin.roles.create');
         Route::post('/roles', [AdminUserManagementController::class, 'rolesStore'])->name('admin.roles.store');
-        Route::get('/roles/{role}/edit', [AdminUserManagementController::class, 'rolesEdit'])->name('admin.roles.edit');
+        Route::get('/roles/create', [AdminUserManagementController::class, 'rolesCreate'])->name('admin.roles.create');
         Route::put('/roles/{role}', [AdminUserManagementController::class, 'rolesUpdate'])->name('admin.roles.update');
         Route::delete('/roles/{role}', [AdminUserManagementController::class, 'rolesDestroy'])->name('admin.roles.destroy');
+        Route::get('/roles/{role}/edit', [AdminUserManagementController::class, 'rolesEdit'])->name('admin.roles.edit');
     });
 
     // Маршруты для учителей

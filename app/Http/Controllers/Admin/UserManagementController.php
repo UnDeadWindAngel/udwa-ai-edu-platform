@@ -354,6 +354,7 @@ class UserManagementController extends Controller
     public function create()
     {
         $roles = Role::where('name', '!=', 'super-admin')->get();
+
         return view('admin.users.create', compact('roles'));
     }
 
