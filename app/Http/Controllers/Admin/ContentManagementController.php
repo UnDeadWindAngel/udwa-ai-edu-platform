@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
 use App\Models\Subject;
+use App\Models\Level;
 use Illuminate\Http\Request;
 
 class ContentManagementController extends Controller
@@ -46,9 +47,74 @@ class ContentManagementController extends Controller
 
     public function subjects()
     {
-        $subjects = Subject::orderBy('order')->paginate(15);
+        $subjects = Subject::withCount(['courses', 'levels'])
+            ->orderBy('order')
+            ->paginate(20);
 
-        return view('admin.content.subjects', compact('subjects'));
+        $totalSubjects = Subject::count();
+        $activeSubjects = Subject::where('is_active', true)->count();
+        $totalCourses = Course::count();
+        $totalLevels = Level::count();
+
+        return view('admin.content.subjects', compact(
+            'subjects',
+            'totalSubjects',
+            'activeSubjects',
+            'totalCourses',
+            'totalLevels'
+        ));
+    }
+
+    public function storeSubject(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:subjects',
+            'description' => 'nullable|string',
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:7',
+            'order' => 'nullable|integer',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['is_active'] = $request->has('is_active');
+
+        Subject::create($validated);
+
+        return redirect()->route('admin.subjects.index')
+            ->with('success', 'Предмет успешно создан.');
+    }
+
+    public function updateSubject(Request $request, Subject $subject)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|unique:subjects,name,' . $subject->id,
+            'description' => 'nullable|string',
+            'icon' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:7',
+            'order' => 'nullable|integer',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['is_active'] = $request->has('is_active');
+
+        $subject->update($validated);
+
+        return redirect()->route('admin.subjects.index')
+            ->with('success', 'Предмет успешно обновлен.');
+    }
+
+    public function activateSubject(Subject $subject)
+    {
+        $subject->update(['is_active' => true]);
+
+        return back()->with('success', 'Предмет активирован.');
+    }
+
+    public function deactivateSubject(Subject $subject)
+    {
+        $subject->update(['is_active' => false]);
+
+        return back()->with('success', 'Предмет деактивирован.');
     }
 
     public function updateSubjectOrder(Request $request)

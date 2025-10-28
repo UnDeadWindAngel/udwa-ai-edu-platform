@@ -114,7 +114,7 @@
                     <h5 class="mb-0"><i class="fas fa-user-tag"></i> Управление ролями</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.users.update-role', $user) }}" method="POST">
+                    <form action="{{ route('admin.users.update-roles', $user) }}" method="POST">
                         @csrf
                         @method('PUT')
 

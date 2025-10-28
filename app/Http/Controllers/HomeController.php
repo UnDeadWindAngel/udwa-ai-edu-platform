@@ -41,23 +41,29 @@ class HomeController extends Controller
      */
     private function studentDashboard($user)
     {
+        // Получаем прогресс по уровням
         $progress = LevelProgress::where('student_id', $user->id)
-            ->with(['subject', 'level'])
+            ->with(['level.subject'])
             ->orderBy('updated_at', 'desc')
             ->limit(5)
             ->get();
 
+        // Получаем активные записи на курсы
         $enrollments = Enrollment::where('student_id', $user->id)
-            ->with('course')
-            ->active()
+            ->with('course.subject')
+            ->where('status', 'active')
             ->get();
 
+        // Получаем рекомендуемые предметы
         $recentSubjects = Subject::where('is_active', true)
-            ->orderBy('order')
+            ->orderBy('created_at', 'desc')
             ->limit(3)
             ->get();
 
-        return view('home', compact('user', 'progress', 'enrollments', 'recentSubjects'));
+        // Рассчитываем общий прогресс
+        $overallProgress = $this->calculateOverallProgress($user);
+
+        return view('home', compact('user', 'progress', 'enrollments', 'recentSubjects', 'overallProgress'));
     }
 
     /**
@@ -65,15 +71,15 @@ class HomeController extends Controller
      */
     private function teacherDashboard($user)
     {
-        $createdCourses = $user->createdCourses()
-            ->withCount('enrollments')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        $createdCourses = Course::where('created_by', $user->id)
+        ->withCount('enrollments')
+        ->orderBy('created_at', 'desc')
+        ->limit(5)
+        ->get();
 
-        $totalStudents = Enrollment::whereIn('course_id', $user->createdCourses()->pluck('id'))
-            ->active()
-            ->count();
+        $totalStudents = Enrollment::whereIn('course_id',
+            Course::where('created_by', $user->id)->pluck('id')
+        )->where('status', 'active')->count();
 
         return view('home', compact('user', 'createdCourses', 'totalStudents'));
     }
@@ -85,7 +91,7 @@ class HomeController extends Controller
     {
         $children = $user->children()
             ->with(['levelProgress' => function($query) {
-                $query->with(['subject', 'level'])
+                $query->with(['level.subject'])
                     ->orderBy('updated_at', 'desc')
                     ->limit(3);
             }])
@@ -102,7 +108,7 @@ class HomeController extends Controller
         $stats = [
             'total_users' => User::count(),
             'total_subjects' => Subject::count(),
-            'active_courses' => Course::active()->count(),
+            'active_courses' => Course::where('is_active', true)->count(),
             'pending_approvals' => Course::where('is_approved', false)->count(),
         ];
 
@@ -121,7 +127,7 @@ class HomeController extends Controller
         }
 
         $progress = LevelProgress::where('student_id', $user->id)
-            ->with(['subject', 'level'])
+            ->with(['level.subject'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -136,7 +142,6 @@ class HomeController extends Controller
     private function calculateOverallProgress($user)
     {
         $totalProgress = LevelProgress::where('student_id', $user->id)
-            ->where('status', 'completed')
             ->avg('progress_percentage');
 
         $completedLevels = LevelProgress::where('student_id', $user->id)
@@ -147,11 +152,14 @@ class HomeController extends Controller
             ->where('status', 'in_progress')
             ->count();
 
+        $averageScore = LevelProgress::where('student_id', $user->id)
+            ->avg('score');
+
         return [
             'total_progress' => round($totalProgress ?? 0, 1),
             'completed_levels' => $completedLevels,
             'in_progress' => $inProgress,
-            'average_score' => round(LevelProgress::where('student_id', $user->id)->avg('score') ?? 0, 1)
+            'average_score' => round($averageScore ?? 0, 1)
         ];
     }
 }
